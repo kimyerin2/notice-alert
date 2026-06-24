@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project local files
+logs/
+*.log
+
+# Local database
+db/*.sqlite
+db/*.sqlite3
+*.sqlite
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
