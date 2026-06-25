@@ -230,3 +230,12 @@ db/*.sqlite3
 # OS files
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Firebase secret
+firebase-service-account.json
+crawler/firebase-service-account.json
