@@ -239,3 +239,10 @@ __pycache__/
 # Firebase secret
 firebase-service-account.json
 crawler/firebase-service-account.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+

@@ -1,0 +1,9 @@
+{
+  "name": "학교 공지 알림",
+  "short_name": "공지알림",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "description": "학교 공지사항 새 글 알림 서비스"
+}
