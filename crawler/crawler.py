@@ -2,6 +2,7 @@ import os
 import re
 import json
 import html
+import time
 import hashlib
 import logging
 from datetime import datetime, timezone
@@ -18,9 +19,15 @@ from google.cloud.firestore_v1 import FieldFilter
 from pywebpush import webpush, WebPushException
 
 
-BASE_URL = "http://security.swu.ac.kr/"
-NOTICE_LIST_URL = "http://security.swu.ac.kr/sub.html?page=community_notice"
-SOURCE_NAME = "swu-security-notice"
+SOURCES = [
+    {
+        "source_key": "swu-security",
+        "source_name": "지능정보보호학부",
+        "base_url": "http://security.swu.ac.kr/",
+        "list_url": "http://security.swu.ac.kr/sub.html?page=community_notice",
+        "view_keyword": "community_notice_view",
+    }
+]
 
 INIT_MODE = os.getenv("INIT_MODE", "false").lower() == "true"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -43,46 +50,33 @@ def normalize_text(text):
 
 
 def extract_date_from_text(text):
-    """
-    날짜 형태 추출:
-    - 2026.03.18
-    - 2026-03-18
-    - 2026/03/18
-    """
     text = normalize_text(text)
 
-    match = re.search(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})", text)
+    patterns = [
+        r"(20\d{2})[.\-/]\s*(\d{1,2})[.\-/]\s*(\d{1,2})",
+        r"(20\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일",
+    ]
 
-    if not match:
-        return None
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            year, month, day = match.groups()
+            return f"{year}-{int(month):02d}-{int(day):02d}"
 
-    year, month, day = match.groups()
-    return f"{year}-{int(month):02d}-{int(day):02d}"
+    return None
 
 
-def make_notice_id(url):
-    """
-    URL의 idx 값을 Firestore 문서 ID로 사용합니다.
-    예:
-    idx=1642 -> swu-security-1642
-    """
+def make_notice_id(source_key, url):
     match = re.search(r"[?&]idx=(\d+)", url)
 
     if match:
-        return f"swu-security-{match.group(1)}"
+        return f"{source_key}-{match.group(1)}"
 
     hashed = hashlib.sha1(url.encode("utf-8")).hexdigest()
-    return f"swu-security-{hashed[:16]}"
+    return f"{source_key}-{hashed[:16]}"
 
 
 def init_firestore():
-    """
-    로컬:
-      crawler/firebase-service-account.json 사용
-
-    GitHub Actions:
-      FIREBASE_SERVICE_ACCOUNT_JSON 환경변수 사용
-    """
     if firebase_admin._apps:
         return firestore.client()
 
@@ -118,14 +112,41 @@ def fetch_html(url):
         timeout=REQUEST_TIMEOUT,
     )
     response.raise_for_status()
-
     response.encoding = response.apparent_encoding
 
     return response.text
 
 
-def crawl_notices():
-    html_text = fetch_html(NOTICE_LIST_URL)
+def enrich_notice_from_detail(notice):
+    if notice.get("date"):
+        return notice
+
+    try:
+        detail_html = fetch_html(notice["url"])
+        soup = BeautifulSoup(detail_html, "html.parser")
+        page_text = normalize_text(soup.get_text(" ", strip=True))
+
+        detail_date = extract_date_from_text(page_text)
+
+        if detail_date:
+            notice["date"] = detail_date
+            logging.info("Date enriched: %s -> %s", notice["title"], detail_date)
+
+        time.sleep(0.15)
+
+    except Exception as e:
+        logging.warning(
+            "Failed to enrich date. title=%s url=%s error=%s",
+            notice.get("title"),
+            notice.get("url"),
+            e,
+        )
+
+    return notice
+
+
+def crawl_source(source):
+    html_text = fetch_html(source["list_url"])
     soup = BeautifulSoup(html_text, "html.parser")
 
     notices = []
@@ -134,10 +155,10 @@ def crawl_notices():
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"]
 
-        if "community_notice_view" not in href:
+        if source["view_keyword"] not in href:
             continue
 
-        url = urljoin(BASE_URL, href)
+        url = urljoin(source["base_url"], href)
 
         if url in seen_urls:
             continue
@@ -152,29 +173,54 @@ def crawl_notices():
         date = extract_date_from_text(parent_text)
 
         if not title:
+            title = parent_text
+
+        if not title:
             logging.warning("Skipped notice with empty title. url=%s", url)
             continue
 
         notice = {
-            "id": make_notice_id(url),
+            "id": make_notice_id(source["source_key"], url),
             "title": title,
             "url": url,
             "date": date,
-            "source": SOURCE_NAME,
+            "sourceKey": source["source_key"],
+            "sourceName": source["source_name"],
         }
 
+        notice = enrich_notice_from_detail(notice)
         notices.append(notice)
+
+    logging.info(
+        "Crawled source. source=%s count=%d",
+        source["source_name"],
+        len(notices),
+    )
 
     return notices
 
 
+def crawl_notices():
+    all_notices = []
+
+    for source in SOURCES:
+        try:
+            notices = crawl_source(source)
+            all_notices.extend(notices)
+        except Exception as e:
+            logging.warning(
+                "Source crawl failed. source=%s error=%s",
+                source["source_name"],
+                e,
+            )
+
+    return all_notices
+
+
 def save_notices_to_firestore(db, notices):
-    """
-    Firestore notices 컬렉션에 저장합니다.
-    이미 존재하는 문서는 중복으로 판단하고 저장하지 않습니다.
-    """
     new_notices = []
     duplicate_count = 0
+    updated_date_count = 0
 
     for notice in notices:
         doc_ref = db.collection("notices").document(notice["id"])
@@ -182,7 +228,34 @@ def save_notices_to_firestore(db, notices):
 
         if doc.exists:
             duplicate_count += 1
-            logging.debug("Duplicate skipped: %s", notice["title"])
+
+            existing_data = doc.to_dict() or {}
+            existing_date = existing_data.get("date")
+            new_date = notice.get("date")
+
+            updates = {}
+
+            if new_date and not existing_date:
+                updates["date"] = new_date
+                updates["updatedAt"] = datetime.now(timezone.utc)
+                updated_date_count += 1
+
+            if notice.get("sourceName") and not existing_data.get("sourceName"):
+                updates["sourceName"] = notice["sourceName"]
+
+            if notice.get("sourceKey") and not existing_data.get("sourceKey"):
+                updates["sourceKey"] = notice["sourceKey"]
+
+            if updates:
+                doc_ref.update(updates)
+                logging.info(
+                    "Updated existing notice. title=%s updates=%s",
+                    notice["title"],
+                    list(updates.keys()),
+                )
+            else:
+                logging.debug("Duplicate skipped: %s", notice["title"])
+
             continue
 
         now = datetime.now(timezone.utc)
@@ -190,36 +263,39 @@ def save_notices_to_firestore(db, notices):
         data = {
             "title": notice["title"],
             "url": notice["url"],
-            "date": notice["date"],
-            "source": notice["source"],
+            "date": notice.get("date"),
+            "sourceKey": notice.get("sourceKey"),
+            "sourceName": notice.get("sourceName"),
             "createdAt": now,
+            "updatedAt": now,
         }
 
         doc_ref.set(data)
         new_notices.append(notice)
 
-        logging.info("New notice saved: %s", notice["title"])
+        logging.info(
+            "New notice saved: [%s] %s",
+            notice.get("sourceName"),
+            notice["title"],
+        )
         logging.info("Notice URL: %s", notice["url"])
 
-    return new_notices, duplicate_count
+    return new_notices, duplicate_count, updated_date_count
 
 
 def build_push_payload(notice):
+    source_name = notice.get("sourceName", "학교 공지")
+
     return {
-        "title": "새 학과 공지사항",
+        "title": f"[{source_name}] 새 공지",
         "body": notice["title"],
         "url": notice["url"],
         "date": notice.get("date"),
-        "source": notice.get("source", SOURCE_NAME),
+        "source": source_name,
     }
 
 
 def send_web_push_to_all(db, notice):
-    """
-    Firestore push_subscriptions 컬렉션에 저장된 구독자에게 Web Push를 보냅니다.
-
-    아직 프론트엔드를 만들기 전이면 구독자가 0명이므로 sent=0이 정상입니다.
-    """
     if not VAPID_PRIVATE_KEY:
         logging.warning("VAPID_PRIVATE_KEY is missing. Push skipped.")
         return
@@ -309,26 +385,17 @@ def main():
 
     notices = crawl_notices()
 
-    logging.info("Crawled notices count: %d", len(notices))
+    logging.info("Total crawled notices count: %d", len(notices))
 
     if not notices:
         logging.warning("No notices crawled. Process finished.")
         return
 
-    new_notices, duplicate_count = save_notices_to_firestore(db, notices)
+    new_notices, duplicate_count, updated_date_count = save_notices_to_firestore(db, notices)
 
     logging.info("Duplicate notices count: %d", duplicate_count)
+    logging.info("Updated missing date count: %d", updated_date_count)
     logging.info("New notices count: %d", len(new_notices))
-
-    if new_notices:
-        logging.info("New notice summary:")
-        for notice in new_notices:
-            logging.info(
-                "- %s | %s | %s",
-                notice["title"],
-                notice["date"],
-                notice["url"],
-            )
 
     notify_new_notices(db, new_notices)
 
