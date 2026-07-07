@@ -45,7 +45,8 @@ function formatDate(value) {
 export default function App() {
   const [notices, setNotices] = useState([]);
   
-  const [status, setStatus] = useState("시스템 권한 및 네트워크 연결 확인 중...");
+  // 상태 메시지와 구독 여부
+  const [status, setStatus] = useState("시스템 네트워크 동기화 중...");
   const [isSubscribed, setIsSubscribed] = useState(false);
   
   const [loading, setLoading] = useState(false);
@@ -53,6 +54,7 @@ export default function App() {
   const [hasMore, setHasMore] = useState(true);
   const [noticeLoading, setNoticeLoading] = useState(false);
   
+  // 🌙 다크/라이트 모드 (기본: 라이트)
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
@@ -66,12 +68,12 @@ export default function App() {
   useEffect(() => {
     async function checkSubscriptionStatus() {
       if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-        setStatus("ERR: 푸시 알림을 지원하지 않는 브라우저입니다.");
+        setStatus("ERR : 알림 기능을 지원하지 않는 환경입니다.");
         return;
       }
 
       if (Notification.permission === "denied") {
-        setStatus("DENIED: 알림 권한이 차단되었습니다. 시스템 설정에서 허용하십시오.");
+        setStatus("DENIED : 알림 권한이 차단되었습니다.");
         setIsSubscribed(false);
         return;
       }
@@ -81,19 +83,19 @@ export default function App() {
         if (registration) {
           const subscription = await registration.pushManager.getSubscription();
           if (subscription) {
-            setStatus("SYS_OK: 대상 기기가 알림망에 연결되어 수신 중입니다.");
+            setStatus("SYS_OK : 시스템 알림망에 연결되어 있습니다.");
             setIsSubscribed(true);
           } else {
-            setStatus("STANDBY: 현재 알림을 수신하지 않는 상태입니다.");
+            setStatus("STANDBY : 알림 수신이 비활성화된 상태입니다.");
             setIsSubscribed(false);
           }
         } else {
-          setStatus("STANDBY: 현재 알림을 수신하지 않는 상태입니다.");
+          setStatus("STANDBY : 알림 수신이 비활성화된 상태입니다.");
           setIsSubscribed(false);
         }
       } catch (error) {
         console.error(error);
-        setStatus("ERR: 기기 상태를 확인할 수 없습니다.");
+        setStatus("ERR : 상태를 확인할 수 없습니다.");
       }
     }
 
@@ -123,7 +125,7 @@ export default function App() {
       setHasMore(snapshot.docs.length === 20);
     } catch (error) {
       console.error(error);
-      setStatus(`DB_ERR: 데이터베이스 연결 실패 (${error.message})`);
+      setStatus(`DB_ERR : 데이터베이스 연결 실패 (${error.message})`);
     } finally {
       setNoticeLoading(false);
     }
@@ -163,28 +165,28 @@ export default function App() {
   async function subscribePush() {
     try {
       setLoading(true);
-      setStatus("CONNECTING: 알림망에 접속을 시도합니다...");
+      setStatus("CONNECTING : 보안 알림망에 접속을 시도합니다...");
 
-      if (!("serviceWorker" in navigator)) { setStatus("ERR: 지원하지 않는 환경입니다."); return null; }
-      if (!("PushManager" in window)) { setStatus("ERR: 웹 푸시 API가 차단되었습니다."); return null; }
-      if (!("Notification" in window)) { setStatus("ERR: 알림 권한 시스템이 없습니다."); return null; }
+      if (!("serviceWorker" in navigator)) { setStatus("ERR : 지원하지 않는 브라우저입니다."); return null; }
+      if (!("PushManager" in window)) { setStatus("ERR : 웹 푸시 API가 차단되었습니다."); return null; }
+      if (!("Notification" in window)) { setStatus("ERR : 알림 권한 시스템이 없습니다."); return null; }
 
       const permission = await Notification.requestPermission();
-      if (permission === "denied") { setStatus("DENIED: 알림 권한이 차단되었습니다."); return null; }
-      if (permission !== "granted") { setStatus("STANDBY: 알림 권한이 허용되지 않았습니다."); return null; }
+      if (permission === "denied") { setStatus("DENIED : 권한이 거부되었습니다. 기기 설정에서 허용해주세요."); return null; }
+      if (permission !== "granted") { setStatus("STANDBY : 권한이 허용되지 않았습니다."); return null; }
 
       const registration = await registerServiceWorker();
       const existingSubscription = await registration.pushManager.getSubscription();
 
       if (existingSubscription) {
         const subscriptionId = await saveSubscription(existingSubscription);
-        setStatus("SYS_OK: 이미 연결되어 있습니다. (수신 중)");
+        setStatus("SYS_OK : 이미 시스템 알림망에 연결되어 있습니다.");
         setIsSubscribed(true);
         return subscriptionId;
       }
 
       const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      if (!publicKey) { setStatus("ERR: VAPID 키가 누락되었습니다."); return null; }
+      if (!publicKey) { setStatus("ERR : 인증 키가 누락되었습니다."); return null; }
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -192,12 +194,12 @@ export default function App() {
       });
 
       const subscriptionId = await saveSubscription(subscription);
-      setStatus("SUCCESS: 시스템 알림 수신이 활성화되었습니다.");
+      setStatus("SUCCESS : 새 공지 알림이 활성화되었습니다.");
       setIsSubscribed(true);
       return subscriptionId;
     } catch (error) {
       console.error(error);
-      setStatus(`ERR: 연결 실패 (${error.message})`);
+      setStatus(`ERR : 연결 실패 (${error.message})`);
       return null;
     } finally {
       setLoading(false);
@@ -207,10 +209,10 @@ export default function App() {
   async function testPush() {
     try {
       setLoading(true);
-      setStatus("PROCESSING: 테스트 패킷을 준비 중입니다...");
+      setStatus("PROCESSING : 테스트 패킷 전송을 준비 중입니다...");
 
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        setStatus("ERR: 필수 환경이 지원되지 않습니다."); return;
+        setStatus("ERR : 필수 환경이 지원되지 않습니다."); return;
       }
 
       const registration = await registerServiceWorker();
@@ -224,7 +226,7 @@ export default function App() {
       }
 
       if (!subscriptionId) {
-        setStatus("WARN: 테스트 전 [시스템 연결]을 활성화하십시오."); return;
+        setStatus("WARN : 테스트 전 알림 수신을 먼저 활성화해주세요."); return;
       }
 
       await addDoc(collection(db, "push_test_requests"), {
@@ -234,135 +236,130 @@ export default function App() {
         userAgent: navigator.userAgent,
       });
 
-      setStatus("SUCCESS: 테스트 패킷이 발송되었습니다. 수신을 확인하십시오.");
+      setStatus("SUCCESS : 테스트 패킷이 발송되었습니다.");
     } catch (error) {
       console.error(error);
-      setStatus(`ERR: 전송 실패 (${error.message})`);
+      setStatus(`ERR : 전송 실패 (${error.message})`);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <>
-      {/* 글래스모피즘을 위한 은은한 배경 오로라(블러) 효과 */}
-      <div className="ambient-bg">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
-
-      <main className="container">
-        {/* 장식 요소 (유지하되 고급스럽게) */}
-        <div className="bg-deco bg-deco-1 interactive-float">SYS_RDY</div>
-        <div className="bg-deco bg-deco-2 interactive-float">NET: OK</div>
+    <main className="container">
+      {/* 둥둥 떠다니는 장식들 */}
+      <div className="bg-deco bg-deco-1 interactive-float">SYS_RDY</div>
+      <div className="bg-deco bg-deco-2 interactive-float">NET: OK</div>
+      
+      {/* 터미널 1: 제어 센터 */}
+      <section className="terminal-window window-animate">
+        <div className="terminal-header">
+          <div className="header-title">
+            <span className="icon-pulse">🔴</span> root@swu: ~/제어_센터
+          </div>
+          <button className="theme-toggle-btn bounce-hover" onClick={toggleTheme}>
+            {theme === "light" ? "모드: ☀️ LIGHT" : "모드: 🌙 DARK"}
+          </button>
+        </div>
         
-        {/* 제어 패널 (Glass Terminal) */}
-        <section className="glass-window window-animate">
-          <div className="glass-header">
-            <div className="header-title">
-              <span className={`status-dot ${isSubscribed ? "pulse-green" : "pulse-red"}`}></span>
-              root@swu: ~/설정_및_제어
-            </div>
-            <button className="theme-toggle-btn" onClick={toggleTheme}>
-              {theme === "light" ? "LIGHT" : "DARK"} MODE
-            </button>
-          </div>
-          
-          <div className="glass-body">
-            {/* 꽉 찬 레이아웃 (좌측 상태 링 + 우측 컨트롤) */}
-            <div className="dashboard-grid">
-              
-              {/* 시스템 상태 링 (이모지 대체) */}
-              <div className="system-status-core">
-                <div className={`core-ring ${isSubscribed ? "active" : ""}`}>
-                  <div className="core-inner">
-                    <span className="core-text">{isSubscribed ? "ON" : "OFF"}</span>
-                  </div>
-                </div>
-                <div className="core-label">
-                  [ NODE: {isSubscribed ? "CONNECTED" : "DISCONNECTED"} ]
-                </div>
+        <div className="terminal-body">
+          {/* ✨ 완전히 개편된 시각적 대시보드 */}
+          <div className="neo-dashboard">
+            
+            {/* 좌측: 순수 디자인 장식 (맥박 뛰는 링 & 바코드) */}
+            <div className="neo-visual-box">
+              <div className={`cyber-ring ${isSubscribed ? "active" : ""}`}>
+                <div className="ring-inner"></div>
+                <div className="ring-pulse"></div>
               </div>
-
-              {/* 조작부 */}
-              <div className="control-panel">
-                <div className="panel-text">
-                  <h2 className="panel-title">Push Notification Link</h2>
-                  <p className="panel-desc">
-                    학부 홈페이지의 새로운 공지사항 데이터를 실시간으로 모니터링하여 대상 기기로 시스템 푸시를 전송합니다.
-                  </p>
-                </div>
-                
-                <div className="btn-group-glass">
-                  <button className="btn-glass primary" onClick={subscribePush} disabled={loading}>
-                    {loading ? "처리중..." : "EXEC: ./시스템_연결_활성화"}
-                  </button>
-                  <button className="btn-glass secondary" onClick={testPush} disabled={loading}>
-                    {loading ? "처리중..." : "EXEC: ./테스트_패킷_전송"}
-                  </button>
-                </div>
+              <div className="cyber-barcode"></div>
+              <div className="cyber-tags">
+                <span>// SECURE_LINK</span>
+                <span>// v2.4</span>
               </div>
             </div>
 
-            {/* 터미널 로그 출력부 */}
-            <div className="glass-terminal-log">
-              <span className="cursor blink">█</span>
-              <span className="log-msg">{status}</span>
-            </div>
-          </div>
-        </section>
+            {/* 우측: 직관적인 상태 & 세련된 버튼 */}
+            <div className="neo-control-box">
+              <div className="status-hero">
+                <h1 className="hero-title">SWU PUSH LINK</h1>
+                <div className={`status-badge ${isSubscribed ? "active" : ""}`}>
+                  <span className="badge-dot"></span>
+                  {isSubscribed ? "알림 수신 중 (CONNECTED)" : "수신 대기 (STANDBY)"}
+                </div>
+              </div>
 
-        {/* 데이터 리스트 패널 */}
-        <section className="glass-window window-animate delay-1">
-          <div className="glass-header">
-            <div className="header-title">
-              <span className="status-dot gray"></span> root@swu: ~/최근_수신_데이터
+              <div className="btn-group neo-btns">
+                <button className="neo-btn primary" onClick={subscribePush} disabled={loading}>
+                  <span className="btn-deco"></span>
+                  <span className="btn-text">{loading ? "처리중..." : "알림 활성화"}</span>
+                </button>
+                <button className="neo-btn secondary" onClick={testPush} disabled={loading}>
+                  <span className="btn-deco"></span>
+                  <span className="btn-text">{loading ? "처리중..." : "연결 테스트"}</span>
+                </button>
+              </div>
             </div>
-            <span className="controls">_ □ X</span>
           </div>
           
-          <div className="glass-body">
-            <h2 className="section-title">&nbsp;DB_STREAM: Fetching recent nodes...</h2>
+          {/* 터미널 로그 바 */}
+          <div className="status-log neo-log">
+            <span className="cursor blink">█</span> <span className="log-msg">{status}</span>
+          </div>
+        </div>
+      </section>
 
-            <div className="log-container">
-              {noticeLoading && notices.length === 0 ? (
-                <p className="sys-msg loading-pulse">데이터를 수신하고 있습니다...</p>
-              ) : notices.length === 0 ? (
-                <p className="sys-msg">수신된 데이터가 없습니다.</p>
-              ) : (
-                <>
-                  <ul className="log-tree">
-                    {notices.map((notice) => (
-                      <li key={notice.id} className="log-node">
-                        <div className="node-title-row">
-                          <span className="tree-branch">├─</span>
-                          <a href={notice.url} target="_blank" rel="noreferrer" className="node-title-link">
-                            {notice.title}
-                          </a>
-                        </div>
-                        <div className="node-meta-row">
-                          <span className="tree-branch">│&nbsp;&nbsp;└─</span>
-                          <span className="glass-tag date">작성: {notice.date ? formatDate(notice.date) : formatDate(notice.createdAt)}</span>
-                          <span className="glass-tag src">분류: {notice.sourceName || "학부공지"}</span>
-                        </div>
-                      </li>
-                    ))}
-                    <li className="log-node tree-end">
-                      <span className="tree-branch">└─</span> [ 탐색 종료 : EOF ]
+      {/* 터미널 2: 데이터 리스트 */}
+      <section className="terminal-window window-animate delay-1">
+        <div className="terminal-header">
+          <div className="header-title">
+            <span className="icon-pulse">🔴</span> root@swu: ~/최근_공지사항
+          </div>
+          <span className="controls">_ □ X</span>
+        </div>
+        
+        <div className="terminal-body">
+          <h2 className="section-title">&nbsp;공지 데이터베이스를 열람합니다.</h2>
+
+          <div className="log-container">
+            {noticeLoading && notices.length === 0 ? (
+              <p className="sys-msg loading-pulse">데이터 수신 중...</p>
+            ) : notices.length === 0 ? (
+              <p className="sys-msg">수신된 공지가 없습니다.</p>
+            ) : (
+              <>
+                <ul className="log-tree">
+                  {notices.map((notice) => (
+                    <li key={notice.id} className="log-node">
+                      <div className="node-title-row">
+                        <span className="tree-branch">├─</span>
+                        <a href={notice.url} target="_blank" rel="noreferrer" className="node-title-link wobbly-hover">
+                          {notice.title}
+                        </a>
+                      </div>
+                      <div className="node-meta-row">
+                        <span className="tree-branch">│&nbsp;&nbsp;└─</span>
+                        <span className="meta-tag date">작성: {notice.date ? formatDate(notice.date) : formatDate(notice.createdAt)}</span>
+                        <span className="meta-tag src">분류: {notice.sourceName || "학부공지"}</span>
+                      </div>
                     </li>
-                  </ul>
+                  ))}
+                  <li className="log-node tree-end">
+                    <span className="tree-branch">└─</span> [ 탐색 종료 ]
+                  </li>
+                </ul>
 
-                  {hasMore && (
-                    <button className="btn-glass load-more" onClick={handleLoadMore} disabled={noticeLoading}>
-                      {noticeLoading ? "로딩중..." : "CMD: fetch_older_records"}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+                {hasMore && (
+                  <button className="neo-btn outline-btn load-more" onClick={handleLoadMore} disabled={noticeLoading}>
+                    <span className="btn-deco"></span>
+                    <span className="btn-text">{noticeLoading ? "로딩중..." : "과거 기록 더보기"}</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
-        </section>
-      </main>
-    </>
+        </div>
+      </section>
+    </main>
   );
 }
