@@ -45,7 +45,6 @@ function formatDate(value) {
 export default function App() {
   const [notices, setNotices] = useState([]);
   
-  // 상태 메시지와 구독 여부
   const [status, setStatus] = useState("시스템 네트워크 동기화 중...");
   const [isSubscribed, setIsSubscribed] = useState(false);
   
@@ -54,7 +53,6 @@ export default function App() {
   const [hasMore, setHasMore] = useState(true);
   const [noticeLoading, setNoticeLoading] = useState(false);
   
-  // 🌙 다크/라이트 모드 (기본: 라이트)
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
@@ -251,41 +249,26 @@ export default function App() {
       <div className="bg-deco bg-deco-1 interactive-float">SYS_RDY</div>
       <div className="bg-deco bg-deco-2 interactive-float">NET: OK</div>
       
-      {/* 터미널 1: 제어 센터 */}
-      <section className="terminal-window window-animate">
-        <div className="terminal-header">
-          <div className="header-title">
-            <span className="icon-pulse">🔴</span> root@swu: ~/제어_센터
-          </div>
-          <button className="theme-toggle-btn bounce-hover" onClick={toggleTheme}>
-            {theme === "light" ? "모드: ☀️ LIGHT" : "모드: 🌙 DARK"}
-          </button>
-        </div>
+      <div className="layout-grid">
         
-        <div className="terminal-body">
-          {/* ✨ 완전히 개편된 시각적 대시보드 */}
-          <div className="neo-dashboard">
-            
-            {/* 좌측: 순수 디자인 장식 (맥박 뛰는 링 & 바코드) */}
-            <div className="neo-visual-box">
-              <div className={`cyber-ring ${isSubscribed ? "active" : ""}`}>
-                <div className="ring-inner"></div>
-                <div className="ring-pulse"></div>
-              </div>
-              <div className="cyber-barcode"></div>
-              <div className="cyber-tags">
-                <span>// SECURE_LINK</span>
-                <span>// v2.4</span>
-              </div>
+        {/* 터미널 1: 제어 센터 (사이드바) */}
+        <section className="terminal-window window-animate sidebar-section">
+          <div className="terminal-header">
+            <div className="header-title">
+              <span className="icon-pulse">🔴</span> root@swu: ~/제어_센터
             </div>
-
-            {/* 우측: 직관적인 상태 & 세련된 버튼 */}
+            <button className="theme-toggle-btn bounce-hover" onClick={toggleTheme}>
+              {theme === "light" ? "모드: ☀️ LIGHT" : "모드: 🌙 DARK"}
+            </button>
+          </div>
+          
+          <div className="terminal-body sidebar-body">
             <div className="neo-control-box">
               <div className="status-hero">
                 <h1 className="hero-title">SWU PUSH LINK</h1>
                 <div className={`status-badge ${isSubscribed ? "active" : ""}`}>
                   <span className="badge-dot"></span>
-                  {isSubscribed ? "알림 수신 중 (CONNECTED)" : "수신 대기 (STANDBY)"}
+                  {isSubscribed ? "알림 수신중" : "수신 대기중"}
                 </div>
               </div>
 
@@ -300,66 +283,66 @@ export default function App() {
                 </button>
               </div>
             </div>
+            
+            <div className="status-log neo-log">
+              <span className="cursor blink">█</span> <span className="log-msg">{status}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* 터미널 2: 데이터 리스트 (메인 패널) */}
+        <section className="terminal-window window-animate delay-1 main-section">
+          <div className="terminal-header">
+            <div className="header-title">
+              <span className="icon-pulse">🔴</span> root@swu: ~/최근_공지사항
+            </div>
+            <span className="controls">_ □ X</span>
           </div>
           
-          {/* 터미널 로그 바 */}
-          <div className="status-log neo-log">
-            <span className="cursor blink">█</span> <span className="log-msg">{status}</span>
-          </div>
-        </div>
-      </section>
+          <div className="terminal-body">
+            <h2 className="section-title">&nbsp;공지 데이터베이스를 열람합니다.</h2>
 
-      {/* 터미널 2: 데이터 리스트 */}
-      <section className="terminal-window window-animate delay-1">
-        <div className="terminal-header">
-          <div className="header-title">
-            <span className="icon-pulse">🔴</span> root@swu: ~/최근_공지사항
-          </div>
-          <span className="controls">_ □ X</span>
-        </div>
-        
-        <div className="terminal-body">
-          <h2 className="section-title">&nbsp;공지 데이터베이스를 열람합니다.</h2>
-
-          <div className="log-container">
-            {noticeLoading && notices.length === 0 ? (
-              <p className="sys-msg loading-pulse">데이터 수신 중...</p>
-            ) : notices.length === 0 ? (
-              <p className="sys-msg">수신된 공지가 없습니다.</p>
-            ) : (
-              <>
-                <ul className="log-tree">
-                  {notices.map((notice) => (
-                    <li key={notice.id} className="log-node">
-                      <div className="node-title-row">
-                        <span className="tree-branch">├─</span>
-                        <a href={notice.url} target="_blank" rel="noreferrer" className="node-title-link wobbly-hover">
-                          {notice.title}
-                        </a>
-                      </div>
-                      <div className="node-meta-row">
-                        <span className="tree-branch">│&nbsp;&nbsp;└─</span>
-                        <span className="meta-tag date">작성: {notice.date ? formatDate(notice.date) : formatDate(notice.createdAt)}</span>
-                        <span className="meta-tag src">분류: {notice.sourceName || "학부공지"}</span>
-                      </div>
+            <div className="log-container">
+              {noticeLoading && notices.length === 0 ? (
+                <p className="sys-msg loading-pulse">데이터 수신 중...</p>
+              ) : notices.length === 0 ? (
+                <p className="sys-msg">수신된 공지가 없습니다.</p>
+              ) : (
+                <>
+                  <ul className="log-tree">
+                    {notices.map((notice) => (
+                      <li key={notice.id} className="log-node">
+                        <div className="node-title-row">
+                          <span className="tree-branch">├─</span>
+                          <a href={notice.url} target="_blank" rel="noreferrer" className="node-title-link wobbly-hover">
+                            {notice.title}
+                          </a>
+                        </div>
+                        <div className="node-meta-row">
+                          <span className="tree-branch">│&nbsp;&nbsp;└─</span>
+                          <span className="meta-tag date">작성: {notice.date ? formatDate(notice.date) : formatDate(notice.createdAt)}</span>
+                          <span className="meta-tag src">분류: {notice.sourceName || "학부공지"}</span>
+                        </div>
+                      </li>
+                    ))}
+                    <li className="log-node tree-end">
+                      <span className="tree-branch">└─</span> [ 탐색 종료 ]
                     </li>
-                  ))}
-                  <li className="log-node tree-end">
-                    <span className="tree-branch">└─</span> [ 탐색 종료 ]
-                  </li>
-                </ul>
+                  </ul>
 
-                {hasMore && (
-                  <button className="neo-btn outline-btn load-more" onClick={handleLoadMore} disabled={noticeLoading}>
-                    <span className="btn-deco"></span>
-                    <span className="btn-text">{noticeLoading ? "로딩중..." : "과거 기록 더보기"}</span>
-                  </button>
-                )}
-              </>
-            )}
+                  {hasMore && (
+                    <button className="neo-btn outline-btn load-more" onClick={handleLoadMore} disabled={noticeLoading}>
+                      <span className="btn-deco"></span>
+                      <span className="btn-text">{noticeLoading ? "로딩중..." : "과거 기록 더보기"}</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+        
+      </div>
     </main>
   );
 }

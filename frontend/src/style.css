@@ -9,7 +9,6 @@
   --window-border: #e0e0e0;
   --header-bg: #f5f5f5;
   
-  /* 디자인 패널용 은은한 배경 */
   --panel-bg: #fafafa;
   --panel-border: #eeeeee;
   
@@ -50,7 +49,7 @@
 }
 
 /* =========================================
-   2. 기본 레이아웃 & 배경 (오리지널 격자)
+   2. 기본 레이아웃 & 배경
 ========================================= */
 * {
   box-sizing: border-box;
@@ -72,21 +71,29 @@ body {
   background-size: 40px 40px;
 }
 
+/* ✨ 공지사항 영역이 왼쪽으로 더 넓어질 수 있도록 전체 최대 너비 확장 */
 .container {
-  width: min(850px, 95%);
+  width: min(1150px, 95%);
   margin: 50px auto;
   position: relative;
   z-index: 10;
 }
 
+/* ✨ 사이드바는 더 작게(280px), 오른쪽 메인 영역은 가득 채우게 설정 */
+.layout-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
 /* =========================================
-   3. 창 (Terminal Window) 스타일 
+   3. 창 (Terminal Window) 공통 스타일 
 ========================================= */
 .terminal-window {
   background-color: var(--window-bg);
   border: 1px solid var(--window-border);
   border-radius: 8px; 
-  margin-bottom: 40px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
@@ -146,133 +153,53 @@ body {
   padding: 30px;
 }
 
+/* 좁아진 사이드바 내부 여백 조정 */
+.sidebar-body {
+  padding: 24px 16px;
+}
+
 /* =========================================
-   4. ✨ NEO 대시보드 (디자인으로 꽉 채운 뷰)
+   4. 제어 센터(사이드바) UI
 ========================================= */
-.neo-dashboard {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 25px;
-  align-items: stretch;
-}
-
-/* 좌측 시각적 장식 박스 */
-.neo-visual-box {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 160px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-/* 맥박 링 애니메이션 */
-.cyber-ring {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 2px dashed var(--window-border);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  transition: all 0.5s ease;
-}
-.cyber-ring.active {
-  border-color: var(--swu-red);
-  border-style: solid;
-  box-shadow: 0 0 15px var(--swu-red-glow);
-}
-.ring-inner {
-  width: 24px;
-  height: 24px;
-  background: var(--window-border);
-  border-radius: 50%;
-  transition: background 0.5s ease;
-}
-.cyber-ring.active .ring-inner {
-  background: var(--swu-red);
-}
-.cyber-ring.active .ring-pulse {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 2px solid var(--swu-red);
-  animation: pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-@keyframes pulse-ring {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(1.6); opacity: 0; }
-}
-
-/* 장식용 바코드 패턴 (CSS 그라데이션) */
-.cyber-barcode {
-  width: 100%;
-  height: 20px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--text-dim) 0,
-    var(--text-dim) 2px,
-    transparent 2px,
-    transparent 4px,
-    var(--text-dim) 4px,
-    var(--text-dim) 5px,
-    transparent 5px,
-    transparent 8px
-  );
-  opacity: 0.3;
-  margin-bottom: 15px;
-}
-
-.cyber-tags {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 1px;
-}
-
-/* 우측 상태 및 컨트롤 박스 */
 .neo-control-box {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-}
-
-.status-hero {
   margin-bottom: 20px;
 }
+
+/* 타이틀 & 배지 한 줄 정렬 */
+.status-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  margin-bottom: 25px;
+  gap: 8px;
+}
+
 .hero-title {
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: 18px; /* 좁아진 사이드바에 맞춤 */
   color: var(--text-title);
-  letter-spacing: 2px;
-  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  margin: 0;
+  white-space: nowrap;
 }
+
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-kor);
-  font-size: 13px;
-  font-weight: 700;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px; /* 좁은 한 줄 정렬을 위한 폰트 축소 */
+  font-weight: bold;
   color: var(--text-dim);
   background: var(--panel-bg);
-  padding: 6px 14px;
+  padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid var(--panel-border);
   transition: all 0.3s;
+  white-space: nowrap;
 }
 .status-badge.active {
   background: var(--swu-red-dim);
@@ -280,8 +207,8 @@ body {
   color: var(--swu-red);
 }
 .badge-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-dim);
   transition: background 0.3s;
@@ -292,11 +219,11 @@ body {
 }
 
 /* =========================================
-   5. ✨ 세련된 사이버 엣지 버튼
+   5. 버튼 UI (사이버 엣지 스타일)
 ========================================= */
 .btn-group {
   display: flex;
-  gap: 12px;
+  gap: 8px; /* 좁아진 공간을 위해 간격 축소 */
   flex-wrap: nowrap;
 }
 
@@ -306,10 +233,10 @@ body {
   background: var(--panel-bg);
   border: 1px solid var(--window-border);
   color: var(--text-title);
-  padding: 14px 20px;
+  padding: 12px 6px; /* 버튼 좌우 패딩 줄임 */
   border-radius: 4px;
   font-family: var(--font-kor);
-  font-size: 14px;
+  font-size: 12px; /* 폰트 미세 조정 */
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;
@@ -320,7 +247,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* 버튼 좌측 포인트 바 */
 .btn-deco {
   position: absolute;
   left: 0;
@@ -330,10 +256,7 @@ body {
   background: var(--window-border);
   transition: all 0.3s ease;
 }
-
-.neo-btn.primary .btn-deco {
-  background: var(--swu-red);
-}
+.neo-btn.primary .btn-deco { background: var(--swu-red); }
 
 .btn-text {
   position: relative;
@@ -341,7 +264,6 @@ body {
   transition: color 0.3s ease;
 }
 
-/* Hover Effects: 배경이 쓱 차오르는 애니메이션 */
 .neo-btn::before {
   content: "";
   position: absolute;
@@ -357,42 +279,35 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px var(--swu-red-glow);
 }
+.neo-btn:hover:not(:disabled)::before { width: 100%; }
+.neo-btn:hover:not(:disabled) .btn-text { color: #ffffff; }
+.neo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.neo-btn:hover:not(:disabled)::before {
-  width: 100%;
-}
-.neo-btn:hover:not(:disabled) .btn-text {
-  color: #ffffff;
-}
-
-.neo-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* 더보기 아웃라인 버튼 전용 */
 .outline-btn {
   width: 100%;
   border-style: dashed;
   margin-top: 20px;
+  padding: 14px 10px;
+  font-size: 14px;
 }
 
 /* =========================================
-   6. 상태 로그 텍스트 (터미널 띠)
+   6. 터미널 상태 로그 띠
 ========================================= */
 .neo-log {
   background-color: var(--panel-bg);
   border: 1px solid var(--window-border);
   border-left: 4px solid var(--swu-red);
-  padding: 15px 20px;
+  padding: 12px 16px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-main);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-mono);
+  word-break: keep-all;
 }
 
 .cursor.blink {
@@ -402,7 +317,7 @@ body {
 @keyframes blinker { 50% { opacity: 0; } }
 
 /* =========================================
-   7. 공지사항 트리 (오리지널)
+   7. 공지사항 트리 (메인 영역)
 ========================================= */
 .section-title {
   font-size: 16px;
@@ -486,7 +401,7 @@ body {
 }
 
 /* =========================================
-   8. 떠다니는 장식
+   8. 배경 장식
 ========================================= */
 .bg-deco {
   position: absolute;
@@ -515,31 +430,23 @@ body {
 }
 
 /* =========================================
-   9. 반응형 (모바일 최적화)
+   9. 반응형 (모바일 & 태블릿)
 ========================================= */
+@media (max-width: 850px) {
+  /* 화면이 작아지면 사이드바가 위로 올라가는 1단 구조로 변경 */
+  .layout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 600px) {
   .terminal-body { padding: 20px; }
+  .sidebar-body { padding: 20px; }
   .container { margin: 20px auto; }
   
-  /* 모바일에서는 좌측 디자인 박스와 우측 컨트롤 박스를 위아래로 꽉 차게 배치 */
-  .neo-dashboard {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  /* 디자인 박스 가로로 넓게 눕히기 */
-  .neo-visual-box {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-around;
-    padding: 16px;
-  }
-  .cyber-ring { margin-bottom: 0; width: 44px; height: 44px; }
-  .ring-inner { width: 16px; height: 16px; }
-  .cyber-barcode { width: 40%; margin-bottom: 0; }
-  
-  .hero-title { font-size: 22px; text-align: center; }
-  .status-hero { text-align: center; }
+  .hero-title { font-size: 18px; }
+  .status-badge { font-size: 11px; }
   
   .btn-group { gap: 8px; }
   .neo-btn { font-size: 13px; padding: 12px 0; }
