@@ -25,6 +25,8 @@ SOURCES = [
         "source_name": "지능정보보호학부",
         "base_url": "http://security.swu.ac.kr/",
         "list_url": "http://security.swu.ac.kr/sub.html?page=community_notice",
+        "page_url_template": "http://security.swu.ac.kr/sub.html?page=community_notice&page1={page}&searchKey=&searchValue=",
+        "max_pages": 10,
         "view_keyword": "community_notice_view",
     }
 ]
@@ -145,54 +147,100 @@ def enrich_notice_from_detail(notice):
     return notice
 
 
-def crawl_source(source):
-    html_text = fetch_html(source["list_url"])
-    soup = BeautifulSoup(html_text, "html.parser")
+def get_list_urls(source):
+    urls = [source["list_url"]]
 
+    page_url_template = source.get("page_url_template")
+    max_pages = source.get("max_pages", 1)
+
+    if page_url_template:
+        for page in range(2, max_pages + 1):
+            urls.append(page_url_template.format(page=page))
+
+    return urls
+
+
+def crawl_source(source):
     notices = []
     seen_urls = set()
 
-    for a_tag in soup.find_all("a", href=True):
-        href = a_tag["href"]
+    list_urls = get_list_urls(source)
 
-        if source["view_keyword"] not in href:
-            continue
+    for page_index, list_url in enumerate(list_urls, start=1):
+        try:
+            logging.info(
+                "Crawling list page. source=%s page=%d url=%s",
+                source["source_name"],
+                page_index,
+                list_url,
+            )
 
-        url = urljoin(source["base_url"], href)
+            html_text = fetch_html(list_url)
+            soup = BeautifulSoup(html_text, "html.parser")
 
-        if url in seen_urls:
-            continue
+            page_notice_count = 0
 
-        seen_urls.add(url)
+            for a_tag in soup.find_all("a", href=True):
+                href = a_tag["href"]
 
-        title = normalize_text(a_tag.get_text(" ", strip=True))
+                if source["view_keyword"] not in href:
+                    continue
 
-        parent = a_tag.find_parent(["tr", "li", "div"])
-        parent_text = normalize_text(parent.get_text(" ", strip=True)) if parent else ""
+                url = urljoin(source["base_url"], href)
 
-        date = extract_date_from_text(parent_text)
+                if url in seen_urls:
+                    continue
 
-        if not title:
-            title = parent_text
+                seen_urls.add(url)
 
-        if not title:
-            logging.warning("Skipped notice with empty title. url=%s", url)
-            continue
+                title = normalize_text(a_tag.get_text(" ", strip=True))
 
-        notice = {
-            "id": make_notice_id(source["source_key"], url),
-            "title": title,
-            "url": url,
-            "date": date,
-            "sourceKey": source["source_key"],
-            "sourceName": source["source_name"],
-        }
+                parent = a_tag.find_parent(["tr", "li", "div"])
+                parent_text = normalize_text(parent.get_text(" ", strip=True)) if parent else ""
 
-        notice = enrich_notice_from_detail(notice)
-        notices.append(notice)
+                date = extract_date_from_text(parent_text)
+
+                if not title:
+                    title = parent_text
+
+                if not title:
+                    logging.warning("Skipped notice with empty title. url=%s", url)
+                    continue
+
+                notice = {
+                    "id": make_notice_id(source["source_key"], url),
+                    "title": title,
+                    "url": url,
+                    "date": date,
+                    "sourceKey": source["source_key"],
+                    "sourceName": source["source_name"],
+                }
+
+                notice = enrich_notice_from_detail(notice)
+
+                notices.append(notice)
+                page_notice_count += 1
+
+            logging.info(
+                "Crawled list page. source=%s page=%d count=%d",
+                source["source_name"],
+                page_index,
+                page_notice_count,
+            )
+
+            time.sleep(0.2)
+
+        except Exception as e:
+            logging.warning(
+                "List page crawl failed. source=%s page=%d url=%s error=%s",
+                source["source_name"],
+                page_index,
+                list_url,
+                e,
+            )
 
     logging.info(
-        "Crawled source. source=%s count=%d",
+        "Crawled source. source=%s total_count=%d",
         source["source_name"],
         len(notices),
     )
@@ -312,7 +360,7 @@ def send_web_push_to_all(db, notice):
     failed_count = 0
 
     for sub_doc in subscriptions:
-        sub_data = sub_doc.to_dict()
+        sub_data = sub_doc.to_dict() or {}
         subscription_info = sub_data.get("subscription")
 
         if not subscription_info:
