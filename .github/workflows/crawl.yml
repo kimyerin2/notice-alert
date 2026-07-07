@@ -5,12 +5,7 @@ on:
 
   schedule:
     # GitHub Actions cron은 UTC 기준입니다.
-    # KST 08:00 = UTC 23:00
-    # KST 12:00 = UTC 03:00
-    # KST 18:00 = UTC 09:00
-    - cron: "0 23 * * *"
-    - cron: "0 3 * * *"
-    - cron: "0 9 * * *"
+    - cron: "0 0,3,6,9,12 * * *"  
 
 jobs:
   crawl:
