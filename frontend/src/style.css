@@ -1,46 +1,56 @@
 /* =========================================
-   1. 테마 변수 (SWU 시그니처 레드 포인트)
+   1. 글래스모피즘 & 터미널 테마 변수 설정
 ========================================= */
 :root, :root[data-theme="light"] {
-  --bg-main: #ffffff; 
-  --bg-grid: rgba(0, 0, 0, 0.03); 
+  --bg-base: #f4f5f7;
   
-  --window-bg: #ffffff;
-  --window-border: #e0e0e0;
-  --header-bg: #f5f5f5;
+  /* 애플 스타일 유리 질감 (Light) */
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-border-inner: rgba(0, 0, 0, 0.05);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
   
-  --swu-red: #a6192e; 
-  --swu-red-hover: #821223;
-  --swu-red-glow: rgba(166, 25, 46, 0.15);
+  /* SWU 포인트 컬러 */
+  --swu-red-rgb: 166, 25, 46; 
+  --swu-red: rgb(var(--swu-red-rgb));
+  --swu-red-glow: rgba(var(--swu-red-rgb), 0.15);
   
-  --text-main: #1a1a1a; 
-  --text-dim: #737373;
-  --text-sys: #555555;
+  --text-title: #1d1d1f;
+  --text-main: #333336; 
+  --text-dim: #86868b;
   
-  --font-mono: 'VT323', 'Courier New', Courier, monospace;
-  --font-kor: 'Pretendard', 'Malgun Gothic', sans-serif; 
+  /* 로그 바 (터미널) */
+  --terminal-bg: rgba(0, 0, 0, 0.04);
+  --terminal-border: rgba(0, 0, 0, 0.06);
+  --terminal-text: #1d1d1f;
+
+  --font-mono: 'SF Mono', 'VT323', 'Courier New', Courier, monospace;
+  --font-kor: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
 }
 
 :root[data-theme="dark"] {
-  --bg-main: #121212;
-  --bg-grid: rgba(255, 255, 255, 0.03);
+  --bg-base: #000000;
   
-  --window-bg: #1e1e1e;
-  --window-border: #333333;
-  --header-bg: #252525;
+  /* 애플 스타일 유리 질감 (Dark) */
+  --glass-bg: rgba(30, 30, 32, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-inner: rgba(255, 255, 255, 0.03);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   
-  --swu-red: #ff4d6d;
-  --swu-red-hover: #ff758f;
-  --swu-red-glow: rgba(255, 77, 109, 0.2);
+  --swu-red-rgb: 255, 77, 109;
+  --swu-red: rgb(var(--swu-red-rgb));
+  --swu-red-glow: rgba(var(--swu-red-rgb), 0.25);
   
-  --text-main: #f0f0f0;
-  --text-dim: #999999;
-  --text-sys: #aaaaaa;
+  --text-title: #f5f5f7;
+  --text-main: #e8e8ed;
+  --text-dim: #86868b;
+  
+  /* 로그 바 (터미널) */
+  --terminal-bg: rgba(0, 0, 0, 0.4);
+  --terminal-border: rgba(255, 255, 255, 0.08);
+  --terminal-text: #f5f5f7;
 }
 
-/* =========================================
-   2. 기본 레이아웃 & 배경 세팅
-========================================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -48,200 +58,308 @@
 }
 
 body {
-  background-color: var(--bg-main);
+  background-color: var(--bg-base);
   color: var(--text-main);
   font-family: var(--font-kor);
   line-height: 1.6;
   transition: background-color 0.4s ease, color 0.4s ease;
   overflow-x: hidden;
-  
-  background-image: 
-    linear-gradient(var(--bg-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-  background-size: 40px 40px;
+}
+
+/* =========================================
+   2. 오로라 블러 배경 (글래스모피즘 코어)
+========================================= */
+.ambient-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: float 10s infinite ease-in-out alternate;
+}
+
+.blob-1 {
+  width: 400px; height: 400px;
+  background: var(--swu-red-glow);
+  top: -100px; left: -100px;
+}
+
+.blob-2 {
+  width: 500px; height: 500px;
+  background: rgba(130, 130, 150, 0.15);
+  bottom: -150px; right: -100px;
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 50px) scale(1.1); }
 }
 
 .container {
-  width: min(850px, 95%);
-  margin: 50px auto;
+  width: min(850px, 92%);
+  margin: 60px auto;
   position: relative;
   z-index: 10;
 }
 
 /* =========================================
-   3. 창 (Terminal Window) 스타일 및 애니메이션
+   3. Glass Window (터미널 창)
 ========================================= */
-.terminal-window {
-  background-color: var(--window-bg);
-  border: 1px solid var(--window-border);
-  border-radius: 8px; 
-  margin-bottom: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+.glass-window {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  margin-bottom: 32px;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+/* 내부의 미세한 빛 반사 선 */
+.glass-window::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border-inner);
+  pointer-events: none;
 }
 
-.terminal-window:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-  border-color: var(--swu-red-glow);
+.glass-window:hover {
+  transform: translateY(-2px);
 }
 
-.terminal-header {
-  background-color: var(--header-bg);
-  border-bottom: 1px solid var(--window-border);
-  padding: 10px 20px;
+.glass-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--glass-border-inner);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-family: var(--font-mono);
   font-size: 14px;
-  font-weight: bold;
   color: var(--text-dim);
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.icon-pulse {
-  font-size: 10px;
-  animation: pulse-red 2s infinite;
+/* 깜빡이는 상태 점 */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
 }
-@keyframes pulse-red {
-  0% { opacity: 1; text-shadow: 0 0 5px var(--swu-red); }
-  50% { opacity: 0.3; text-shadow: none; }
-  100% { opacity: 1; text-shadow: 0 0 5px var(--swu-red); }
-}
+.pulse-red { background: var(--swu-red); box-shadow: 0 0 8px var(--swu-red); animation: pulse-dot 2s infinite; }
+.pulse-green { background: #32d74b; box-shadow: 0 0 8px #32d74b; animation: pulse-dot 2s infinite; }
+.gray { background: var(--text-dim); }
 
-.terminal-body {
-  padding: 30px;
-}
-
-@media (max-width: 600px) {
-  .terminal-body { padding: 20px; }
-  .container { margin: 20px auto; }
-}
-
-/* =========================================
-   4. 상단 정보 패널 (아스키 아트 중앙 정렬)
-========================================= */
-.sys-info-center {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 25px;
-  padding-bottom: 25px;
-  border-bottom: 1px dashed var(--window-border);
-}
-
-.ascii-art {
-  font-family: var(--font-mono);
-  color: var(--swu-red);
-  font-size: 16px;
-  font-weight: bold;
-  line-height: 1.1;
-  transition: transform 0.2s, text-shadow 0.2s;
-  cursor: default;
-  text-align: left; /* 아스키 아트 자체의 비율 유지를 위해 left */
-}
-.ascii-art.interactive-hover:hover {
-  transform: skewX(-5deg);
-  text-shadow: 2px 0 var(--text-main), -2px 0 var(--swu-red);
-}
-
-/* =========================================
-   5. 버튼 디자인 & 다이나믹 애니메이션
-========================================= */
-.btn-group {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-  justify-content: center; /* 버튼들도 중앙 정렬하면 이쁩니다 */
-}
-
-.cmd-btn {
-  background: transparent;
-  border: 1px solid var(--window-border);
-  color: var(--text-sys);
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-family: var(--font-kor);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.cmd-btn.float-hover:hover:not(:disabled) {
-  background: var(--window-border);
-  color: var(--text-main);
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-
-.cmd-btn.primary-btn {
-  border-color: var(--swu-red);
-  color: var(--swu-red);
-  background: var(--swu-red-glow);
-}
-.cmd-btn.primary-btn:hover:not(:disabled) {
-  background: var(--swu-red);
-  color: #ffffff;
-  box-shadow: 0 8px 20px var(--swu-red-glow);
-}
-
-.cmd-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+@keyframes pulse-dot {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 .theme-toggle-btn {
   background: transparent;
   border: none;
   color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.theme-toggle-btn:hover { color: var(--text-title); }
+
+.glass-body {
+  padding: 32px;
+}
+
+/* =========================================
+   4. 대시보드 구조 (좌측 상태 링 + 우측 패널)
+========================================= */
+.dashboard-grid {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 30px;
+}
+
+/* 좌측: 고급스러운 SF 스타일 코어 링 */
+.system-status-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.core-ring {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  border: 1px dashed var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.core-ring.active {
+  border-color: rgba(var(--swu-red-rgb), 0.5);
+  border-style: solid;
+  box-shadow: 0 0 24px var(--swu-red-glow);
+}
+.core-ring.active::after {
+  content: "";
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--swu-red);
+  animation: ring-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ring-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.core-inner {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: var(--terminal-bg);
+  border: 1px solid var(--glass-border-inner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+.core-text {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--text-title);
+  letter-spacing: 1px;
+}
+.core-ring.active .core-text { color: var(--swu-red); }
+
+.core-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* 우측: 텍스트 및 조작 버튼 */
+.control-panel {
+  flex-grow: 1;
+}
+
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-title);
+  margin-bottom: 8px;
+}
+.panel-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  word-break: keep-all;
+}
+
+/* =========================================
+   5. Glass Buttons (버튼 디자인)
+========================================= */
+.btn-group-glass {
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.btn-glass {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.theme-toggle-btn.bounce-hover:hover {
+
+.btn-glass.primary {
+  background: rgba(var(--swu-red-rgb), 0.1);
+  border: 1px solid rgba(var(--swu-red-rgb), 0.3);
   color: var(--swu-red);
-  transform: scale(1.1);
 }
+.btn-glass.primary:hover:not(:disabled) {
+  background: rgba(var(--swu-red-rgb), 0.2);
+  border-color: var(--swu-red);
+  box-shadow: 0 4px 16px var(--swu-red-glow);
+  transform: scale(1.02);
+}
+
+.btn-glass.secondary, .btn-glass.load-more {
+  background: rgba(150, 150, 150, 0.05);
+  border: 1px solid var(--glass-border-inner);
+  color: var(--text-title);
+}
+.btn-glass.secondary:hover:not(:disabled), .btn-glass.load-more:hover:not(:disabled) {
+  background: rgba(150, 150, 150, 0.1);
+  border-color: var(--text-dim);
+  transform: scale(1.02);
+}
+
+.btn-glass.load-more {
+  width: 100%;
+  margin-top: 20px;
+  border-style: dashed;
+}
+
+.btn-glass:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* =========================================
-   6. 상태 로그 텍스트
+   6. 터미널 로그 박스
 ========================================= */
-.status-log {
-  background-color: var(--bg-main);
-  border: 1px solid var(--window-border);
-  border-left: 4px solid var(--swu-red);
-  padding: 15px 20px;
-  border-radius: 4px;
-  font-size: 15px;
-  color: var(--text-main);
-  font-weight: 600;
+.glass-terminal-log {
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--terminal-text);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-
-.cursor.blink {
-  animation: blinker 1s step-end infinite;
-  color: var(--swu-red);
-}
+.cursor.blink { color: var(--swu-red); animation: blinker 1s step-end infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 
 /* =========================================
-   7. 공지사항 데이터 트리
+   7. 공지사항 트리 (오리지널 느낌 복구 + 깔끔함)
 ========================================= */
 .section-title {
-  font-size: 16px;
+  font-family: var(--font-mono);
+  font-size: 14px;
   color: var(--text-dim);
-  margin-bottom: 25px;
-  font-weight: 600;
+  margin-bottom: 24px;
+  font-weight: normal;
 }
 
 .log-tree {
@@ -250,24 +368,34 @@ body {
 
 .log-node {
   margin-bottom: 16px;
+  padding-bottom: 16px; 
+  border-bottom: 1px dashed var(--glass-border-inner);
   position: relative;
-  transition: all 0.2s;
+  transition: transform 0.2s;
 }
-
 .log-node:hover {
-  transform: translateX(5px);
+  transform: translateX(4px);
+}
+.log-node:last-of-type, .tree-end {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+.tree-end {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 20px;
 }
 
 .tree-branch {
-  color: var(--window-border);
+  color: var(--text-dim);
   font-family: var(--font-mono);
-  margin-right: 10px;
+  margin-right: 12px;
   user-select: none;
-  transition: color 0.3s;
+  opacity: 0.6;
 }
-.log-node:hover .tree-branch {
-  color: var(--swu-red);
-}
+.log-node:hover .tree-branch { color: var(--swu-red); opacity: 1; }
 
 .node-title-row {
   display: flex;
@@ -275,82 +403,89 @@ body {
 }
 
 .node-title-link {
-  display: inline-block; 
-  color: var(--text-main);
+  color: var(--text-title);
   text-decoration: none;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.4;
   word-break: keep-all; 
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+  transition: color 0.2s;
 }
+.node-title-link:hover { color: var(--swu-red); }
 
-.node-title-link.wobbly-hover:hover {
-  color: var(--swu-red);
-  transform: translateX(4px) translateY(-2px) rotate(-0.5deg); 
-  text-shadow: 2px 2px 0px var(--swu-red-glow);
-}
-
+/* 메타 태그 (Glass Pill 스타일) */
 .node-meta-row {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+  margin-top: 8px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
 }
+.node-meta-row::-webkit-scrollbar { display: none; }
 
-.meta-tag {
+.glass-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--glass-border-inner);
   color: var(--text-dim);
-  margin-right: 15px;
-  background: var(--bg-main);
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--window-border);
 }
-.meta-tag.date {
-  border-color: var(--swu-red-glow);
+.glass-tag.date {
+  background: rgba(var(--swu-red-rgb), 0.05);
+  border-color: rgba(var(--swu-red-rgb), 0.2);
   color: var(--swu-red);
 }
 
-.tree-end {
-  color: var(--text-dim);
-  font-size: 14px;
-  margin-top: 30px;
-  font-weight: bold;
-}
-
-.load-more {
-  width: 100%;
-  margin-top: 20px;
-  border-style: dashed;
-}
-
 /* =========================================
-   8. 떠다니는 장식 
+   8. 떠다니는 텍스트 장식
 ========================================= */
 .bg-deco {
   position: absolute;
   font-family: var(--font-mono);
-  color: var(--window-border);
-  font-size: 16px;
-  font-weight: bold;
+  color: var(--text-dim);
+  font-size: 12px;
+  opacity: 0.5;
   z-index: 0;
-  transition: transform 0.5s ease-out, opacity 0.3s;
+  transition: transform 0.5s;
 }
-.bg-deco-1 { top: -20px; left: 10px; }
-.bg-deco-2 { bottom: -20px; right: 10px; }
-
-.bg-deco.interactive-float:hover {
-  transform: translate(20px, -20px) rotate(10deg);
-  opacity: 0;
-}
+.bg-deco-1 { top: -24px; left: 16px; }
+.bg-deco-2 { bottom: -24px; right: 16px; }
+.bg-deco.interactive-float:hover { transform: translateY(-5px); color: var(--swu-red); opacity: 1; }
 
 .loading-pulse {
-  animation: pulse-op 1.5s infinite;
   color: var(--swu-red);
-  font-weight: bold;
+  font-family: var(--font-mono);
+  animation: pulse-op 1.5s infinite;
 }
-@keyframes pulse-op {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+@keyframes pulse-op { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* =========================================
+   9. 반응형 레이아웃 (모바일)
+========================================= */
+@media (max-width: 600px) {
+  .container { margin: 30px auto; }
+  .glass-body { padding: 24px; }
+  
+  .dashboard-grid {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .system-status-core {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .core-ring { width: 60px; height: 60px; }
+  .core-inner { width: 44px; height: 44px; }
+  .core-text { font-size: 14px; }
+  .core-label { font-size: 13px; }
+  
+  .btn-group-glass { gap: 8px; }
+  .btn-glass { font-size: 11px; padding: 12px 4px; }
 }

@@ -17,7 +17,8 @@
       {
         "ignore": [
           "mask-size",
-          "user-select"
+          "user-select",
+          "backdrop-filter"
         ]
       }
     ]
