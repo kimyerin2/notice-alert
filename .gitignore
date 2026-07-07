@@ -245,4 +245,37 @@ frontend/node_modules/
 frontend/dist/
 frontend/.env.local
 
+# Environment files
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Firebase / Google Cloud credentials
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceAccount*.json
+google-credentials.json
+credentials.json
+
+# Firebase local files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# GitHub Actions local testing
+.act/
+
+# IDE
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+
+# Misc secrets
+*.pem
+*.key
+*.crt
+
 
