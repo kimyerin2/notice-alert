@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   addDoc,
   collection,
@@ -9,6 +9,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -54,25 +55,58 @@ export default function App() {
   const [status, setStatus] = useState("알림을 받으려면 버튼을 눌러주세요.");
   const [loading, setLoading] = useState(false);
 
+  const [lastNoticeDoc, setLastNoticeDoc] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [noticeLoading, setNoticeLoading] = useState(false);
+
   useEffect(() => {
-    loadNotices();
+    loadNotices({ reset: true });
   }, []);
 
-  async function loadNotices() {
-    const q = query(
-      collection(db, "notices"),
-      orderBy("createdAt", "desc"),
-      limit(20)
-    );
+  async function loadNotices({ reset = false } = {}) {
+    try {
+      setNoticeLoading(true);
 
-    const snapshot = await getDocs(q);
+      let noticeQuery;
 
-    const items = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
+      if (!reset && lastNoticeDoc) {
+        noticeQuery = query(
+          collection(db, "notices"),
+          orderBy("date", "desc"),
+          startAfter(lastNoticeDoc),
+          limit(20)
+        );
+      } else {
+        noticeQuery = query(
+          collection(db, "notices"),
+          orderBy("date", "desc"),
+          limit(20)
+        );
+      }
 
-    setNotices(items);
+      const snapshot = await getDocs(noticeQuery);
+
+      const items = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      if (reset) {
+        setNotices(items);
+      } else {
+        setNotices((prev) => [...prev, ...items]);
+      }
+
+      const lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+      setLastNoticeDoc(lastDoc);
+
+      setHasMore(snapshot.docs.length === 20);
+    } catch (error) {
+      console.error(error);
+      setStatus(`공지 목록을 불러오는 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
+      setNoticeLoading(false);
+    }
   }
 
   async function registerServiceWorker() {
@@ -127,7 +161,6 @@ export default function App() {
       }
 
       const registration = await registerServiceWorker();
-
       const existingSubscription = await registration.pushManager.getSubscription();
 
       if (existingSubscription) {
@@ -234,26 +267,46 @@ export default function App() {
       <section className="notice-section">
         <h2>최근 공지</h2>
 
-        {notices.length === 0 ? (
+        {noticeLoading && notices.length === 0 ? (
+          <p>공지 목록을 불러오는 중입니다...</p>
+        ) : notices.length === 0 ? (
           <p>저장된 공지가 없습니다.</p>
         ) : (
-          <ul className="notice-list">
-            {notices.map((notice) => (
-              <li key={notice.id} className="notice-item">
-                <a href={notice.url} target="_blank" rel="noreferrer">
-                  {notice.title}
-                </a>
+          <>
+            <ul className="notice-list">
+              {notices.map((notice) => (
+                <li key={notice.id} className="notice-item">
+                  {React.createElement(
+                    "a",
+                    {
+                      href: notice.url,
+                      target: "_blank",
+                      rel: "noreferrer",
+                    },
+                    notice.title
+                  )}
 
-                <span>
-                  {notice.date
-                    ? `작성일 ${formatDate(notice.date)}`
-                    : `저장일 ${formatDate(notice.createdAt)}`}
-                </span>
+                  <span>
+                    {notice.date
+                      ? `작성일 ${formatDate(notice.date)}`
+                      : `저장일 ${formatDate(notice.createdAt)}`}
+                  </span>
 
-                {notice.sourceName && <small>{notice.sourceName}</small>}
-              </li>
-            ))}
-          </ul>
+                  {notice.sourceName && <small>{notice.sourceName}</small>}
+                </li>
+              ))}
+            </ul>
+
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => loadNotices()}
+                disabled={noticeLoading}
+              >
+                {noticeLoading ? "불러오는 중..." : "더 보기"}
+              </button>
+            )}
+          </>
         )}
       </section>
     </main>
