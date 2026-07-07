@@ -1,17 +1,46 @@
-:root {
-  /* 저채도 파스텔 컬러 팔레트 */
-  --bg-color: #f6f4f1; /* 따뜻한 오트밀 배경 */
-  --box-bg: #fdfcfb;
-  --text-main: #5d5755;
-  --text-sub: #8c8582;
-  --accent-blue: #a3c4d9;
-  --accent-blue-hover: #8eb3c9;
-  --accent-pink: #eebcd4;
-  --accent-pink-hover: #dfa8c2;
-  --border-color: #e5dfd9;
-  --tag-bg: #f0eadd;
+/* =========================================
+   1. 테마 변수 (SWU 시그니처 레드 포인트)
+========================================= */
+:root, :root[data-theme="light"] {
+  --bg-main: #ffffff; 
+  --bg-grid: rgba(0, 0, 0, 0.03); 
+  
+  --window-bg: #ffffff;
+  --window-border: #e0e0e0;
+  --header-bg: #f5f5f5;
+  
+  --swu-red: #a6192e; 
+  --swu-red-hover: #821223;
+  --swu-red-glow: rgba(166, 25, 46, 0.15);
+  
+  --text-main: #1a1a1a; 
+  --text-dim: #737373;
+  --text-sys: #555555;
+  
+  --font-mono: 'VT323', 'Courier New', Courier, monospace;
+  --font-kor: 'Pretendard', 'Malgun Gothic', sans-serif; 
 }
 
+:root[data-theme="dark"] {
+  --bg-main: #121212;
+  --bg-grid: rgba(255, 255, 255, 0.03);
+  
+  --window-bg: #1e1e1e;
+  --window-border: #333333;
+  --header-bg: #252525;
+  
+  --swu-red: #ff4d6d;
+  --swu-red-hover: #ff758f;
+  --swu-red-glow: rgba(255, 77, 109, 0.2);
+  
+  --text-main: #f0f0f0;
+  --text-dim: #999999;
+  --text-sys: #aaaaaa;
+}
+
+/* =========================================
+   2. 기본 레이아웃 & 배경 세팅
+========================================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -19,273 +48,309 @@
 }
 
 body {
-  /* 귀여운 고운 돋움 폰트 적용 */
-  font-family: 'Gowun Dodum', sans-serif;
-  background-color: var(--bg-color);
+  background-color: var(--bg-main);
   color: var(--text-main);
-  /* 다이어리 속지 같은 도트 패턴 */
-  background-image: radial-gradient(var(--border-color) 1px, transparent 0);
-  background-size: 20px 20px;
+  font-family: var(--font-kor);
   line-height: 1.6;
-  position: relative;
+  transition: background-color 0.4s ease, color 0.4s ease;
   overflow-x: hidden;
+  
+  background-image: 
+    linear-gradient(var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 .container {
-  width: min(720px, 100%);
-  margin: 0 auto;
-  padding: 40px 20px;
+  width: min(850px, 95%);
+  margin: 50px auto;
   position: relative;
-}
-
-/* 둥둥 떠다니는 배경 장식 (주렁주렁 효과 1) */
-.deco-star {
-  position: absolute;
-  font-size: 24px;
-  opacity: 0.7;
-  animation: float 4s ease-in-out infinite;
-  z-index: -1;
-}
-.star-1 { top: 20px; left: 10%; animation-delay: 0s; font-size: 30px; }
-.star-2 { top: 200px; right: 5%; animation-delay: 1s; font-size: 35px;}
-.star-3 { top: 400px; left: 2%; animation-delay: 2s; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(10deg); }
-}
-
-/* 공통 다꾸 메모지 스타일 */
-.wrapper-box {
-  background: var(--box-bg);
-  border-radius: 24px;
-  padding: 35px 30px;
-  margin-bottom: 40px;
-  /* 부드러운 그림자와 아날로그 감성의 테두리 */
-  box-shadow: 0 8px 24px rgba(163, 153, 145, 0.15),
-              inset 0 0 0 2px rgba(255, 255, 255, 0.8);
-  border: 1px solid var(--border-color);
-  position: relative;
-}
-
-/* 마스킹 테이프 효과 (주렁주렁 효과 2) */
-.masking-tape {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-2deg);
-  width: 120px;
-  height: 25px;
-  background-color: rgba(238, 188, 212, 0.6); /* 반투명 핑크 테이프 */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   z-index: 10;
-  border-radius: 2px;
-  /* 테이프 끝이 찢어진 느낌 */
-  -webkit-mask-image: repeating-linear-gradient(45deg, transparent, transparent 2px, black 2px, black 4px);
-  mask-image: repeating-linear-gradient(45deg, transparent, transparent 2px, black 2px, black 4px);
-  mask-size: 100% 100%;
 }
 
-.hero {
-  text-align: center;
+/* =========================================
+   3. 창 (Terminal Window) 스타일 및 애니메이션
+========================================= */
+.terminal-window {
+  background-color: var(--window-bg);
+  border: 1px solid var(--window-border);
+  border-radius: 8px; 
+  margin-bottom: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
 }
 
-.hero h1 {
-  font-family: 'Jua', sans-serif; /* 제목은 조금 더 귀여운 폰트 */
-  font-size: 32px;
-  color: var(--text-main);
-  margin-bottom: 12px;
+.terminal-window:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+  border-color: var(--swu-red-glow);
+}
+
+.terminal-header {
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--window-border);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-dim);
+}
+
+.header-title {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
 }
 
-.subtitle {
-  color: var(--text-sub);
-  font-size: 15px;
-  margin-bottom: 24px;
+.icon-pulse {
+  font-size: 10px;
+  animation: pulse-red 2s infinite;
+}
+@keyframes pulse-red {
+  0% { opacity: 1; text-shadow: 0 0 5px var(--swu-red); }
+  50% { opacity: 0.3; text-shadow: none; }
+  100% { opacity: 1; text-shadow: 0 0 5px var(--swu-red); }
 }
 
-.button-row {
+.terminal-body {
+  padding: 30px;
+}
+
+@media (max-width: 600px) {
+  .terminal-body { padding: 20px; }
+  .container { margin: 20px auto; }
+}
+
+/* =========================================
+   4. 상단 정보 패널 (아스키 아트 중앙 정렬)
+========================================= */
+.sys-info-center {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+  padding-bottom: 25px;
+  border-bottom: 1px dashed var(--window-border);
+}
+
+.ascii-art {
+  font-family: var(--font-mono);
+  color: var(--swu-red);
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1.1;
+  transition: transform 0.2s, text-shadow 0.2s;
+  cursor: default;
+  text-align: left; /* 아스키 아트 자체의 비율 유지를 위해 left */
+}
+.ascii-art.interactive-hover:hover {
+  transform: skewX(-5deg);
+  text-shadow: 2px 0 var(--text-main), -2px 0 var(--swu-red);
+}
+
+/* =========================================
+   5. 버튼 디자인 & 다이나믹 애니메이션
+========================================= */
+.btn-group {
   display: flex;
   gap: 12px;
-  justify-content: center;
+  flex-wrap: wrap;
   margin-bottom: 20px;
+  justify-content: center; /* 버튼들도 중앙 정렬하면 이쁩니다 */
 }
 
-button {
-  font-family: 'Gowun Dodum', sans-serif;
-  border: none;
-  border-radius: 999px;
+.cmd-btn {
+  background: transparent;
+  border: 1px solid var(--window-border);
+  color: var(--text-sys);
   padding: 12px 24px;
-  font-weight: bold;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  /* 버튼에도 귀여운 점선 테두리 */
-  outline: 2px dashed transparent;
-  outline-offset: 2px;
-}
-
-.btn-primary {
-  background: var(--accent-blue);
-  color: white;
-  box-shadow: 0 4px 12px rgba(163, 196, 217, 0.4);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-blue-hover);
-  transform: translateY(-2px);
-  outline-color: var(--accent-blue);
-}
-
-.btn-secondary {
-  background: var(--tag-bg);
-  color: var(--text-main);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #e6dfd1;
-  transform: translateY(-2px);
-  outline-color: var(--text-sub);
-}
-
-button:disabled {
-  background: #d5d1cc;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-.status-box {
-  background: #fbf9f6;
-  border-radius: 12px;
-  padding: 12px;
-  border: 1px dashed var(--border-color);
-  display: inline-block;
-  min-width: 250px;
-  margin-top: 10px;
-}
-
-.status {
-  color: var(--text-main);
+  border-radius: 6px;
+  font-family: var(--font-kor);
   font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 소식 리스트 (주렁주렁 다꾸 스타일) */
-.section-title {
-  font-family: 'Jua', sans-serif;
-  font-size: 22px;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px dashed var(--border-color);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.cmd-btn.float-hover:hover:not(:disabled) {
+  background: var(--window-border);
+  color: var(--text-main);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
-.notice-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.cmd-btn.primary-btn {
+  border-color: var(--swu-red);
+  color: var(--swu-red);
+  background: var(--swu-red-glow);
+}
+.cmd-btn.primary-btn:hover:not(:disabled) {
+  background: var(--swu-red);
+  color: #ffffff;
+  box-shadow: 0 8px 20px var(--swu-red-glow);
 }
 
-.notice-item {
-  position: relative;
+.cmd-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* 메모지 하나하나의 스타일 */
-.notice-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 20px 24px 20px 40px; /* 왼쪽 패딩을 넓혀 구멍 공간 확보 */
-  position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 2px 4px 10px rgba(0,0,0,0.02);
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.theme-toggle-btn.bounce-hover:hover {
+  color: var(--swu-red);
+  transform: scale(1.1);
 }
 
-.notice-card:hover {
-  transform: translateY(-3px) rotate(1deg); /* 살짝 삐뚤어지는 귀여운 호버 효과 */
-  box-shadow: 4px 8px 15px rgba(0,0,0,0.05);
-  border-color: var(--accent-blue);
-}
-
-/* 다이어리 펀치 구멍 (주렁주렁 효과 3) */
-.card-hole {
-  position: absolute;
-  top: 50%;
-  left: 15px;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background-color: var(--bg-color); /* 배경색과 맞춰서 구멍뚫린 느낌 */
-  border-radius: 50%;
-  border: 1px inset rgba(0,0,0,0.1);
-}
-
-.notice-meta {
+/* =========================================
+   6. 상태 로그 텍스트
+========================================= */
+.status-log {
+  background-color: var(--bg-main);
+  border: 1px solid var(--window-border);
+  border-left: 4px solid var(--swu-red);
+  padding: 15px 20px;
+  border-radius: 4px;
+  font-size: 15px;
+  color: var(--text-main);
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+}
+
+.cursor.blink {
+  animation: blinker 1s step-end infinite;
+  color: var(--swu-red);
+}
+@keyframes blinker { 50% { opacity: 0; } }
+
+/* =========================================
+   7. 공지사항 데이터 트리
+========================================= */
+.section-title {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.log-tree {
+  list-style: none;
+}
+
+.log-node {
+  margin-bottom: 16px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.log-node:hover {
+  transform: translateX(5px);
+}
+
+.tree-branch {
+  color: var(--window-border);
+  font-family: var(--font-mono);
+  margin-right: 10px;
+  user-select: none;
+  transition: color 0.3s;
+}
+.log-node:hover .tree-branch {
+  color: var(--swu-red);
+}
+
+.node-title-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.node-title-link {
+  display: inline-block; 
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: keep-all; 
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+
+.node-title-link.wobbly-hover:hover {
+  color: var(--swu-red);
+  transform: translateX(4px) translateY(-2px) rotate(-0.5deg); 
+  text-shadow: 2px 2px 0px var(--swu-red-glow);
+}
+
+.node-meta-row {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
 
-.notice-date {
-  font-size: 12px;
-  color: var(--text-sub);
-  background: #f5f3f0;
-  padding: 4px 10px;
-  border-radius: 10px;
+.meta-tag {
+  color: var(--text-dim);
+  margin-right: 15px;
+  background: var(--bg-main);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--window-border);
+}
+.meta-tag.date {
+  border-color: var(--swu-red-glow);
+  color: var(--swu-red);
 }
 
-.notice-source {
-  font-size: 12px;
-  color: #c0859c;
-  background: #fdf5f8;
-  padding: 4px 10px;
-  border-radius: 10px;
-  border: 1px solid #f9e1eb;
-}
-
-.notice-title {
-  display: block;
-  font-size: 16px;
-  color: var(--text-main);
-  font-weight: bold;
-  text-decoration: none;
-  line-height: 1.5;
-  transition: color 0.2s;
-}
-
-.notice-card:hover .notice-title {
-  color: var(--accent-blue-hover);
-}
-
-.load-more-wrapper {
-  text-align: center;
+.tree-end {
+  color: var(--text-dim);
+  font-size: 14px;
   margin-top: 30px;
+  font-weight: bold;
 }
 
-.btn-more {
-  background: transparent;
-  color: var(--text-sub);
-  border: 2px dashed var(--border-color);
-  padding: 10px 30px;
+.load-more {
+  width: 100%;
+  margin-top: 20px;
+  border-style: dashed;
 }
 
-.btn-more:hover:not(:disabled) {
-  background: var(--tag-bg);
-  color: var(--text-main);
-  border-color: var(--text-sub);
+/* =========================================
+   8. 떠다니는 장식 
+========================================= */
+.bg-deco {
+  position: absolute;
+  font-family: var(--font-mono);
+  color: var(--window-border);
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 0;
+  transition: transform 0.5s ease-out, opacity 0.3s;
+}
+.bg-deco-1 { top: -20px; left: 10px; }
+.bg-deco-2 { bottom: -20px; right: 10px; }
+
+.bg-deco.interactive-float:hover {
+  transform: translate(20px, -20px) rotate(10deg);
+  opacity: 0;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-sub);
-  font-size: 15px;
+.loading-pulse {
+  animation: pulse-op 1.5s infinite;
+  color: var(--swu-red);
+  font-weight: bold;
+}
+@keyframes pulse-op {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

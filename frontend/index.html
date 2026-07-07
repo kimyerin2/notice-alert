@@ -4,14 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>학교 공지 알림</title>
-    <!-- 다꾸 감성 폰트 추가 -->
+    <title>SWU Notice Terminal</title>
+    <!-- 사이버펑크/터미널 감성 폰트 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <!-- CRT 모니터 스캔라인 효과를 위한 래퍼 추가 -->
+    <div id="crt-wrapper">
+      <div id="root"></div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

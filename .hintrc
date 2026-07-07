@@ -16,7 +16,8 @@
       "default",
       {
         "ignore": [
-          "mask-size"
+          "mask-size",
+          "user-select"
         ]
       }
     ]
